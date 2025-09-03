@@ -17,44 +17,17 @@ agente = Agente(grade, linha=8, coluna=8)
 alvo = Alvo(grade, *sorteia_coords(grade, rnd))
 visitados = set()
 fronteira = deque([agente.posicao])
-"""
-Dicas:
-???????? = fronteira.popleft()   ← Retira da lista o elemento mais à esquerda (FIFO).
-fronteira.append(??????????)    ← Insere elemento à direita da fila.
-"""
 while agente != alvo and fronteira:
-    proximo = fronteira.popleft()
-
-    if proximo in visitados:
-        continue
-
+    proximo = fronteira.pop()  # Retira da lista o elemento mais à direita.
     agente.move(*proximo)
-    grade.pinta(*agente.posicao, cor="blue")
-    visitados.add(agente.posicao)
-
-    # Verifica se chegou ao alvo
-    if agente == alvo:
-        grade.pinta(
-            *agente.posicao, cor="green"
-        )  # Marca em verde quando encontra o alvo
-        break
-
-    for vizinho in agente.sucessores:
-        if vizinho not in visitados and vizinho not in fronteira:
-            grade.pinta(*vizinho, cor="palegreen")
-            fronteira.append(vizinho)
-
-    grade.pinta(*agente.posicao, cor="blue")
+    grade.pinta(*proximo, cor="blue")
+    visitados.add(proximo)
+    for sucessor in agente.sucessores:
+        if sucessor not in visitados and sucessor not in fronteira:
+            grade.pinta(*sucessor, cor="lightgreen")
+            fronteira.appendleft(sucessor)  # Insere elemento à esquerda da fila.
     grade.desenha()
 
-# Verificação final
-if agente == alvo:
-    grade.pinta(*agente.posicao, cor="green")
-else:
-    print(
-        f"Busca falhou. Agente em {agente.posicao}, Alvo em {(alvo.linha, alvo.coluna)}"
-    )
-
+grade.pinta(*agente.posicao, cor="green" if agente == alvo else "black")
 grade.desenha()
-
 turtle.done()
