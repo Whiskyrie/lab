@@ -1,14 +1,22 @@
-import turtle
-from time import sleep, time
+"""Módulo para desenhar uma grade usando turtle."""
 
+import turtle
+
+from time import sleep, time
 from lab.busca import Alvo
 
 
 class Grade:
+    """Classe que desenha uma grade e gerencia um agente e um alvo."""
+
     alvo: Alvo
 
     def __init__(self, nlinhas=15, ncolunas=15, tamanho_do_no=30, fps=10):
-        self.tamanho_do_no, self.nlinhas, self.ncolunas = tamanho_do_no, nlinhas, ncolunas
+        self.tamanho_do_no, self.nlinhas, self.ncolunas = (
+            tamanho_do_no,
+            nlinhas,
+            ncolunas,
+        )
         width = ncolunas * tamanho_do_no + 100
         height = nlinhas * tamanho_do_no + 100
         self.screen = turtle.Screen()
@@ -21,8 +29,8 @@ class Grade:
         self.grid.color("lightgray")
         self.inicio = time()
 
-        self.xi = - (ncolunas * tamanho_do_no) // 2
-        self.yi = - (nlinhas * tamanho_do_no) // 2
+        self.xi = -(ncolunas * tamanho_do_no) // 2
+        self.yi = -(nlinhas * tamanho_do_no) // 2
         xf = self.xi + ncolunas * tamanho_do_no
         yf = self.yi + nlinhas * tamanho_do_no
 
@@ -44,6 +52,7 @@ class Grade:
         self.screen.update()
 
     def desenha(self):
+        """Desenha a grade e atualiza a tela."""
         espera = 1 / self.fps - (time() - self.inicio)
         if espera > 0:
             sleep(espera)
@@ -52,6 +61,7 @@ class Grade:
         self.screen.update()
 
     def pinta(self, l, c, cor):
+        """Pinta o nó na posição (l, c) com a cor especificada."""
         self.pincel.penup()
         self.pincel.goto(self(l + 0.5, c - 0.5))
         self.pincel.pendown()
