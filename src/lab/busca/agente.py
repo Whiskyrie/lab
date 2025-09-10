@@ -1,9 +1,18 @@
+""" "Módulo que define a classe Agente, representando um agente em um ambiente de busca."""
+
 import turtle
 
 
 class Agente:
+    """Classe que representa um agente em um ambiente de busca."""
+
     def __init__(self, grade, linha, coluna, cor="black", forma="turtle"):
-        self.direcoes_possiveis = {"norte": (1, 0), "sul": (-1, 0), "oeste": (0, 1), "leste": (0, -1)}
+        self.direcoes_possiveis = {
+            "norte": (1, 0),
+            "sul": (-1, 0),
+            "oeste": (0, 1),
+            "leste": (0, -1),
+        }
         self.grade = grade
         self.linha = linha
         self.coluna = coluna
@@ -12,6 +21,7 @@ class Agente:
         self.turtle.penup()
 
     def move(self, linha, coluna):
+        """ "Move o agente para a posição (linha, coluna)."""
         self.linha = linha
         self.coluna = coluna
         x, y = self.grade(self.linha, self.coluna)
@@ -19,10 +29,12 @@ class Agente:
 
     @property
     def posicao(self):
+        """Retorna a posição atual do agente como uma tupla (linha, coluna)."""
         return self.linha, self.coluna
 
     @property
     def sucessores(self):
+        """Retorna uma lista de posições (linha, coluna) que o agente pode alcançar a partir da sua posição atual."""
         lst = []
         for _, (l, c) in self.direcoes_possiveis.items():
             linha = self.linha + l
