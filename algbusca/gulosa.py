@@ -26,8 +26,8 @@ if __name__ == "__main__":
     while start == goal:
         goal = rng.integers(0, NOS)
 
-    # Layout orgânico
-    pos = nx.spring_layout(grafo, k=1.5, iterations=30, seed=42)
+# Layout orgânico
+pos = nx.spring_layout(grafo, k=1.5, iterations=30, seed=42)
 
 try:
     animar_busca(
