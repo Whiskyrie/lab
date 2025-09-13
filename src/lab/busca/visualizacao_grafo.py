@@ -1,7 +1,4 @@
-"""Módulo para visualização e animação de buscas em grafos com Matplotlib e NetworkX.
-
-Nota: Para erro 'Authorization required' em Linux, rode: export DISPLAY=:0 ou instale xvfb e execute com 'xvfb-run poetry run python algbusca/gulosa.py'.
-"""
+"""Módulo para visualização e animação de buscas em grafos com Matplotlib e NetworkX."""
 
 import heapq
 import networkx as nx
@@ -100,7 +97,7 @@ def animar_busca(
 
     if not encontrado:
         print(f"Busca falhou. Início em {start}, Alvo em {goal}")
-        fig = plt.figure(figsize=(20, 20))
+        plt.figure(figsize=(20, 20))
         desenhar_grafo(
             grafo, pos, set(), set(), encontrado=False, start=start, goal=goal
         )
@@ -116,7 +113,7 @@ def animar_busca(
     )
 
     # Execução com desenho em cada passo
-    fig = plt.figure(figsize=(20, 20))
+    plt.figure(figsize=(20, 20))
     plt.ion()
     visitados_sim = set()
     fronteira_set_sim = set()
@@ -136,8 +133,9 @@ def animar_busca(
             continue
 
         visitados_sim.add(atual)
+        # Correção: quebra da linha longa em múltiplas linhas
         titulo_passo = (
-            f"Busca Gulosa - Passo {passo + 1} em Andamento (Heurística: Manhattan)"
+            f"Busca Gulosa - Passo {passo + 1} em Andamento " f"(Heurística: Manhattan)"
         )
         desenhar_grafo(
             grafo,
