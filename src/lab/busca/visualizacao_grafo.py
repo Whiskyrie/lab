@@ -61,9 +61,9 @@ def desenhar_grafo(
             grafo, pos, edgelist=path_edges, edge_color="darkorange", width=4
         )
 
-    # Labels apenas para início ('I') e alvo ('A')
+    # Labels apenas para início ('I') e alvo ('F')
     if start and goal:
-        labels = {start: "I", goal: "A"}
+        labels = {start: "I", goal: "F"}
         nx.draw_networkx_labels(grafo, pos, labels, font_size=12, font_weight="bold")
 
     plt.title(titulo)
@@ -85,34 +85,92 @@ def animar_busca(
         pausa_passo (float): Pausa entre passos.
         pausa_final (float): Pausa no final.
         heuristica (function, optional): Heurística para usar na busca.
+
+    Raises:
+        ValueError: Se start ou goal não estão no grafo.
+        RuntimeError: Se a busca falha por problemas no algoritmo.
+        TypeError: Se os parâmetros têm tipos incorretos.
     """
     if heuristica is None:
         heuristica = manhattan
+
+    # Validar entrada
+    if start not in grafo.nodes():
+        raise ValueError(f"Nó inicial {start} não existe no grafo")
+    if goal not in grafo.nodes():
+        raise ValueError(f"Nó objetivo {goal} não existe no grafo")
 
     # Gerar layout force-directed se não fornecido (simplificado para menos caos)
     if pos is None:
         pos = nx.spring_layout(grafo, k=1.5, iterations=30, seed=42)
 
-    _, parent, encontrado = busca_gulosa(grafo, start, goal, heuristica)
+    # Capturar exceções específicas da busca
+    try:
+        _, parent, encontrado = busca_gulosa(grafo, start, goal, heuristica)
+    except (ValueError, TypeError) as e:
+        print(f"Erro de parâmetros na busca: {e}")
+        return
+    except (KeyError, AttributeError) as e:
+        print(f"Erro de estrutura de dados na busca: {e}")
+        return
+    except RuntimeError as e:
+        print(f"Erro de execução na busca: {e}")
+        return
+    except ImportError as e:
+        print(f"Erro de importação durante a busca: {e}")
+        return
 
     if not encontrado:
         print(f"Busca falhou. Início em {start}, Alvo em {goal}")
-        plt.figure(figsize=(20, 20))
-        desenhar_grafo(
-            grafo, pos, set(), set(), encontrado=False, start=start, goal=goal
-        )
-        plt.show()
+        try:
+            plt.figure(figsize=(20, 20))
+            desenhar_grafo(
+                grafo,
+                pos,
+                set(),
+                set(),
+                encontrado=False,
+                start=start,
+                goal=goal,
+                titulo="Busca falhou - Nós desconectados",
+            )
+            plt.show()
+        except (RuntimeError, ValueError) as e:
+            print(f"Erro ao desenhar grafo de falha: {e}")
         return
 
     # Reconstruir caminho
-    caminho_final = reconstruir_caminho(parent, goal)
-    path_edges = (
-        list(zip(caminho_final[:-1], caminho_final[1:]))
-        if len(caminho_final) > 1
-        else []
-    )
+    try:
+        caminho_final = reconstruir_caminho(parent, goal)
+        path_edges = (
+            list(zip(caminho_final[:-1], caminho_final[1:]))
+            if len(caminho_final) > 1
+            else []
+        )
+    except (KeyError, ValueError, TypeError) as e:
+        print(f"Erro ao reconstruir caminho: {e}")
+        return
 
     # Execução com desenho em cada passo
+    try:
+        _executar_animacao(
+            grafo, pos, start, goal, heuristica, pausa_passo, pausa_final, path_edges
+        )
+    except KeyboardInterrupt:
+        print("Animação interrompida pelo usuário")
+        plt.close()
+    except (RuntimeError, ValueError) as e:
+        print(f"Erro durante a animação: {e}")
+        plt.close()
+
+
+def _executar_animacao(
+    grafo, pos, start, goal, heuristica, pausa_passo, pausa_final, path_edges
+):
+    """
+    Função auxiliar para executar a animação.
+    Separada para melhor organização e tratamento de erros.
+    """
     plt.figure(figsize=(20, 20))
     plt.ion()
     visitados_sim = set()
