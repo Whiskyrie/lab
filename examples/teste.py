@@ -1,102 +1,104 @@
+"""Comparação de PCA: 2 vs 15 componentes principais no dataset MNIST."""
+
+import sys
+from pathlib import Path
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
-from sklearn.manifold import TSNE
 from sklearn.preprocessing import StandardScaler
-import torch
-import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import DataLoader, TensorDataset
 
+# Add src directory to path
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 from lab.dataset import mnist
 
-# Load MNIST data
+# Load and standardize MNIST data
 X, y = mnist(1000)
-
-# Standardize the data
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 
-# Convert to PyTorch tensors
-X_tensor = torch.FloatTensor(X_scaled)
-dataset = TensorDataset(X_tensor, X_tensor)  # Autoencoder uses input as target
-dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
+# Análise de variância
+pca_full = PCA()
+pca_full.fit(X_scaled)
+variance_explained = pca_full.explained_variance_ratio_
+cumulative_variance = variance_explained.cumsum()
 
+print(
+    f"\nVariância - 2 comp: {cumulative_variance[1]:.2%} | 15 comp: {cumulative_variance[14]:.2%}"
+)
 
-# Define a simple autoencoder
-class Autoencoder(nn.Module):
-    """
-    A simple autoencoder model with an encoder and decoder.
-    """
-    def __init__(self):
-        super(Autoencoder, self).__init__()
-        self.encoder = nn.Sequential(
-            nn.Linear(64, 60),
-            nn.ReLU(),
-            nn.Linear(60, 30),
-            nn.ReLU(),
-            nn.Linear(30, 2)  # Bottleneck layer - 2D for visualization
-        )
-        self.decoder = nn.Sequential(
-            nn.Linear(2, 30),
-            nn.ReLU(),
-            nn.Linear(30, 60),
-            nn.ReLU(),
-            nn.Linear(60, 64)
-        )
+# Configurar estilo dos gráficos
+plt.style.use("seaborn-v0_8-darkgrid")
+colors = plt.cm.tab10(range(10))
 
-    def forward(self, x):
-        encoded = self.encoder(x)
-        decoded = self.decoder(encoded)
-        return encoded, decoded
+# Comparação lado a lado: 2 vs 15 componentes
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 8))
+fig.patch.set_facecolor("white")
 
+# PCA com 2 componentes
+pca_2 = PCA(n_components=2)
+embeddings_2 = pca_2.fit_transform(X_scaled)
+var_2 = pca_2.explained_variance_ratio_.sum()
 
-# Initialize model, loss and optimizer
-model = Autoencoder()
-criterion = nn.MSELoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001)
+for digit in range(10):
+    mask = y == digit
+    ax1.scatter(
+        embeddings_2[mask, 0],
+        embeddings_2[mask, 1],
+        c=[colors[digit]],
+        label=f"Dígito {digit}",
+        alpha=0.7,
+        s=60,
+        edgecolors="black",
+        linewidth=0.5,
+    )
 
-# Training loop
-num_epochs = 64
-for epoch in range(num_epochs):
-    for data, target in dataloader:
-        # Forward pass
-        encoded, decoded = model(data)
-        loss = criterion(decoded, target)
+ax1.set_title(
+    f"PCA - 2 Componentes Principais\nVariância Explicada: {var_2:.2%}",
+    fontsize=16,
+    fontweight="bold",
+    pad=20,
+)
+ax1.set_xlabel("Primeira Componente Principal (PC1)", fontsize=14, fontweight="bold")
+ax1.set_ylabel("Segunda Componente Principal (PC2)", fontsize=14, fontweight="bold")
+ax1.legend(loc="best", frameon=True, shadow=True, fontsize=10, ncol=2)
+ax1.grid(True, alpha=0.3, linestyle="--")
+ax1.tick_params(labelsize=11)
 
-        # Backward pass and optimize
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+# PCA com 15 componentes (visualizando PC1 vs PC2)
+pca_15 = PCA(n_components=15)
+embeddings_15 = pca_15.fit_transform(X_scaled)
+var_15 = pca_15.explained_variance_ratio_.sum()
 
-    if (epoch + 1) % 10 == 0:
-        print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {loss.item():.4f}')
+for digit in range(10):
+    mask = y == digit
+    ax2.scatter(
+        embeddings_15[mask, 0],
+        embeddings_15[mask, 1],
+        c=[colors[digit]],
+        label=f"Dígito {digit}",
+        alpha=0.7,
+        s=60,
+        edgecolors="black",
+        linewidth=0.5,
+    )
 
-# Get the 2D encodings for visualization
-with torch.no_grad():
-    encoded_imgs, _ = model(X_tensor)
-    embeddings = encoded_imgs.numpy()
+ax2.set_title(
+    f"PCA - 15 Componentes Principais\n(Visualizando PC1 vs PC2)\nVariância Explicada Total: {var_15:.2%}",
+    fontsize=16,
+    fontweight="bold",
+    pad=20,
+)
+ax2.set_xlabel("Primeira Componente Principal (PC1)", fontsize=14, fontweight="bold")
+ax2.set_ylabel("Segunda Componente Principal (PC2)", fontsize=14, fontweight="bold")
+ax2.legend(loc="best", frameon=True, shadow=True, fontsize=10, ncol=2)
+ax2.grid(True, alpha=0.3, linestyle="--")
+ax2.tick_params(labelsize=11)
 
-plt.figure(figsize=(10, 8))
-plt.scatter(embeddings[:, 0], embeddings[:, 1], c=y, cmap='tab10', alpha=0.6)
-plt.colorbar(label='Digit Class')
-plt.title('Autoencoder 2D Embedding of MNIST Sample')
-plt.show()
-
-# Plot the results
-pca = PCA()
-embeddings = pca.fit_transform(X_scaled)
-# Plot the results
-plt.figure(figsize=(10, 8))
-plt.scatter(embeddings[:, 0], embeddings[:, 1], c=y, cmap='tab10', alpha=0.6)
-plt.colorbar(label='Digit Class')
-plt.title('PCA 2D Embedding of MNIST Sample')
-plt.show()
-
-tsne = TSNE()
-embeddings = tsne.fit_transform(X_scaled)
-# Plot the results
-plt.figure(figsize=(10, 8))
-plt.scatter(embeddings[:, 0], embeddings[:, 1], c=y, cmap='tab10', alpha=0.6)
-plt.colorbar(label='Digit Class')
-plt.title('TSNE 2D Embedding of MNIST Sample')
+plt.tight_layout()
+plt.savefig(
+    "/home/whiskyrie/Projetos/lab/examples/pca_comparison.jpg",
+    dpi=300,
+    bbox_inches="tight",
+    facecolor="white",
+)
+print(f"\n✓ Comparação salva em: examples/pca_comparison.jpg")
 plt.show()
